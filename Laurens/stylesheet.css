@@ -1,0 +1,26 @@
+body{
+	background-color: #000000;
+}
+head{
+	background-color: #000000;
+}
+#findtype{
+	text-align: center;
+	position: relative;
+	left: 50%;
+}
+#zoekbalk{
+	text-align: center;
+	position: relative;
+	left: 50%;
+}
+#s{
+	text-align: center;
+	position: relative;
+	left: 50%;
+	top: -15px;
+}
+#image{
+	width: 99vw;
+	height: 75vh;
+}
