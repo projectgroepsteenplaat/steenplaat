@@ -35,6 +35,7 @@
 <?php
 // main
 // Als cat is gegeven (dat is zo wanneer u op een van de knoppen heeft gedrukt) wordt dit uitgevoerd.
+// Hele bestand van Laurens
 if (isset($_GET['cat']) or isset($_POST['zoekbalk'])){
 	// Connect met de database
 	error_reporting(E_ERROR | E_WARNING | E_PARSE);
