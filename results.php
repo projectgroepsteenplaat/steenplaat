@@ -1,76 +1,236 @@
+<!DOCTYPE html>
+<html>
+	<form action="results.php?cat=knal" href="results.php" method="post">
+		<textarea name="findtype" hidden>knal</textarea>
+		<button type="submit" id="t">knal</button>
+	</form>
+	<form action="results.php?cat=sier" href="results.php" method="post">
+		<textarea name="findtype" hidden>sier</textarea>
+		<button type="submit" id="t">sier</button>
+	</form>
+	<form action="results.php?cat=compleet" href="results.php" method="post">
+		<textarea name="findtype" hidden>compleet</textarea>
+		<button type="submit" id="t">compleet</button>
+	</form>
+	<form action="results.php" href="results.php" method="post">
+		<head>
+			<link rel="stylesheet" type="text/css" href="stylesheet.css"></link>
+		</head>
+		<body>
+			<textarea name="zoekbalk" id="zoekbalk" placeholder="Naam vuurwerk"></textarea>
+			<button type="submit" id="s">search</button></br>
+			<img src="vuurwerk.jpg" id="image"/>
+		</body>
+	</form>
+	<form action="results.php" href="results.php" method="post">
+		<head>
+			<link rel="stylesheet" type="text/css" href="stylesheet.css"></link>
+		</head>
+		<body>
+			<textarea name="findtype" id="findtype" placeholder="Type vuurwerk" hidden></textarea>
+			<button type="submit" id="s" hidden>search</button></br>
+		</body>
+	</form>
+</html>
 <?php
-error_reporting(E_ERROR | E_WARNING | E_PARSE);
-$query = $_POST['query'];
-$error = False;
-if (isset($_POST['iban'])){
-	$iban = True;
-	$iban_obtained = $_POST['iban'];
-	if ($iban_obtained == ""){
-		$iban = False;
-	}
-} else {
-	$iban = False;
-}
-
-function checkIBAN($iban){
-	$iban = strtolower(str_replace(' ','',$iban));
-	$Countries = array('al'=>28,'ad'=>24,'at'=>20,'az'=>28,'bh'=>22,'be'=>16,'ba'=>20,'br'=>29,'bg'=>22,'cr'=>21,'hr'=>21,'cy'=>28,'cz'=>24,'dk'=>18,'do'=>28,'ee'=>20,'fo'=>18,'fi'=>18,'fr'=>27,'ge'=>22,'de'=>22,'gi'=>23,'gr'=>27,'gl'=>18,'gt'=>28,'hu'=>28,'is'=>26,'ie'=>22,'il'=>23,'it'=>27,'jo'=>30,'kz'=>20,'kw'=>30,'lv'=>21,'lb'=>28,'li'=>21,'lt'=>20,'lu'=>20,'mk'=>19,'mt'=>31,'mr'=>27,'mu'=>30,'mc'=>27,'md'=>24,'me'=>22,'nl'=>18,'no'=>15,'pk'=>24,'ps'=>29,'pl'=>28,'pt'=>25,'qa'=>29,'ro'=>24,'sm'=>27,'sa'=>24,'rs'=>22,'sk'=>24,'si'=>19,'es'=>24,'se'=>24,'ch'=>21,'tn'=>24,'tr'=>26,'ae'=>23,'gb'=>22,'vg'=>24);
-	$Chars = array('a'=>10,'b'=>11,'c'=>12,'d'=>13,'e'=>14,'f'=>15,'g'=>16,'h'=>17,'i'=>18,'j'=>19,'k'=>20,'l'=>21,'m'=>22,'n'=>23,'o'=>24,'p'=>25,'q'=>26,'r'=>27,'s'=>28,'t'=>29,'u'=>30,'v'=>31,'w'=>32,'x'=>33,'y'=>34,'z'=>35);
-
-	if(strlen($iban) == $Countries[substr($iban,0,2)]){
-
-		$MovedChar = substr($iban, 4).substr($iban,0,4);
-		$MovedCharArray = str_split($MovedChar);
-		$NewString = "";
-
-		foreach($MovedCharArray AS $key => $value){
-			if(!is_numeric($MovedCharArray[$key])){
-				$MovedCharArray[$key] = $Chars[$MovedCharArray[$key]];
-			}
-			$NewString .= $MovedCharArray[$key];
-		}
-
-		if(bcmod($NewString, '97') == 1){
-			return True;
-		}
-	}
-	return False;
-}
-if ($iban == True){
+// main
+// Als cat is gegeven (dat is zo wanneer u op een van de knoppen heeft gedrukt) wordt dit uitgevoerd.
+if (isset($_GET['cat']) or isset($_POST['zoekbalk'])){
+	// Connect met de database
+	error_reporting(E_ERROR | E_WARNING | E_PARSE);
+	$servername = "localhost";
+	$username = "user";
+	$password = "";
+	$dbname = "klas1g";
+	echo $_GET['cat'];
+	echo '<img src="winkelwagen.jpg" class="c2" width="50"/></br>';
 	try {
-		if (checkIBAN($iban_obtained) == False){
-			echo "Er is iets mis met uw IBAN.</br>";
-			$error = True;
+		$conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
+		// set the PDO error mode to exception
+		$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		}
-	} catch (exception $e){
-		echo "Er is iets mis met uw IBAN.</br>";
+	catch(PDOException $e){
+		echo "Connection failed: " . $e->getMessage();
 	}
-}
-if ($error == False){
-	$vuurwerk = array("cobra 1", "cobra 3", "cobra 5", "cobra 6", "cobra 7", "cobra 8");
-	$prijs = array(2.50, 3.50, 4.50, 5.50, 6.50, 12.50);
-	$voorraad = array("cobra 6", "cobra 7");
-	if (in_array($query, $vuurwerk)){
-		if (in_array($query, $voorraad)){
-			echo $query." hebben we op voorraad!</br>";
-			echo '<img src="'.$query.'.jpg" height="200"/></br>';
-			echo "Van: €".($prijs[array_search($query, $vuurwerk)]+2.4)."0</br>";
-			echo "Voor: €".$prijs[array_search($query, $vuurwerk)]."0";
+	$query = $_POST['findtype'];
+	$zoekopdracht = 'find-type';
+	if($query == ""){
+		$query = $_POST['zoekbalk'];
+		$zoekopdracht = 'find-name';
+	}
+	$sql = "SELECT naam FROM product";
+	$result = $conn->query($sql);
+	$result = $result->fetchAll();
+	$vuurwerk = array();
+	foreach($result as $i){
+		array_push($vuurwerk, $i);
+	}
+	$lijstje = array();
+	foreach($vuurwerk as $a){
+		if(gettype($a) == "array"){
+			foreach($a as $b){
+				if(gettype($b) == "array"){
+					foreach($b as $c){
+						array_push($lijstje, $c);
+					}
+				}else{
+					array_push($lijstje, $b);
+				}
+			}
+		}else{
+			array_push($lijstje, $a);
+		}
+	}
+	$vuurwerk = $lijstje;
+	$prijs = array();
+	$sql = "SELECT prijs FROM product";
+	$result = $conn->query($sql);
+	$result = $result->fetchAll();
+	$prijs = array();
+	foreach($result as $a){
+		foreach($a as $i){
+			array_push($prijs, $i);
+		}
+	}
+	$voorraad = array();
+	$sql = "SELECT naam FROM product WHERE Voorraad > 0";
+	$result = $conn->query($sql);
+	$result = $result->fetchAll();
+	foreach($result as $i){
+		foreach($i as $j){
+			array_push($voorraad, $j);
+		}
+	}
+
+	function printer($data){
+		// echo data
+		// Function by Laurens Frensen
+		if (gettype($data) == "array"){
+			echo "<table>";
+			foreach($data as $i){
+				$k = 1;
+				if (gettype($i) == "array"){
+					echo "<tr>";
+					foreach($i as $j){
+						if ($k % 2 == 1){
+							echo "<td>".$j."</td>";
+						}
+						$k++;
+					}
+					echo "</tr>";
+				}else{
+					echo $i;
+					echo "</br>";
+				}
+			}
+			echo "</table>";
+		} else if (gettype($data) == "boolean"){
+			if ($data == True){
+				echo "True";
+			} else {
+				echo "False";
+			}
 		} else {
-			echo $query." hebben we niet op voorraad!</br>";
-			echo '<img src="'.$query.'.jpg" height="200"/></br>';
-			echo "Prijs: €".$prijs[array_search($query, $vuurwerk)]."0";
+			echo $data;
+		}
+		echo "</br>";
+	}
+	if ($query == "cobra"){
+		foreach($vuurwerk as $query){
+			echo '<img class="centre" src="'.$query.'.jpg" height="200"/></br>';
+			echo '<p class="centre">Prijs: €'.$prijs[array_search($query, $vuurwerk)]."</p>";
+		}
+	} else if ($error == False){
+		if (in_array($query, $vuurwerk)){
+			if (in_array($query, $voorraad)){
+				echo '<p class="centre">'.$query." hebben we op voorraad!</p>";
+				echo '<img class="centre" src="'.$query.'.jpg" height="200"/></br>';
+				echo '<p class="centre">Prijs: €'.$prijs[array_search($query, $vuurwerk)].'</p>';
+			} else {
+				echo '<p class="centre"'.$query." hebben we niet op voorraad!</p>";
+				echo '<img class="centre" src="'.$query.'.jpg" height="200"></img></br>';
+				echo '<div><p class="centre">Prijs: €'.$prijs[array_search($query, $vuurwerk)].'</p></div>';
+			}
+		} else {
+			$best_index = 0;
+			$temp = $vuurwerk;
+			$vuurwerk = array();
+			foreach($temp as $i){
+				if(in_array($i, $vuurwerk)){
+					echo "";
+				}else{
+					array_push($vuurwerk, $i);
+				}
+			}
+			$lijstje = array();
+			foreach($vuurwerk as $a){
+				if(gettype($a) == "array"){
+					foreach($a as $b){
+						if(gettype($b) == "array"){
+							foreach($b as $c){
+								array_push($lijstje, $c);
+							}
+						}else{
+							array_push($lijstje, $b);
+						}
+					}
+				}else{
+					array_push($lijstje, $a);
+				}
+			}
+			foreach($lijstje as $i){
+				if(similar_text($i, $query) > similar_text($lijstje[$best_index], $query)){
+					$best_index = array_search($i, $lijstje);
+				}
+			}
+			if ($zoekopdracht == 'find-name'){
+				echo "Bedoelde u: ".$lijstje[$best_index]."?";
+			} else {
+				if ($query == "compleet"){
+					$sql = "SELECT naam FROM product";
+				} else {
+					$sql = "SELECT naam FROM product WHERE categorie = '".$query."'";
+				}
+				$result = $conn->query($sql);
+				$result = $result->fetchAll();
+				$vuurwerk = array();
+				$y = 0;
+				foreach($result as $i){
+					array_push($vuurwerk, $i);
+					$x = 1;
+					$y++;
+					foreach($i as $j){
+						if ($x == 1){
+							echo '<image width="100" src='.'"'.$j.".jpg".'" class="centre" alt="'.$j.'"/>';
+							$sql2 = "SELECT prijs FROM product WHERE naam = '".$j."'";
+							$result2 = $conn->query($sql2);
+							$result2 = $result2->fetchAll();
+							$x = 0;
+							foreach($result2 as $temp1){
+								foreach($temp1 as $temp2){
+									if ($x == 0){
+										echo '<div><p class="centre">'.$temp2.'</p></div>';
+										$x = 1;
+									}
+								}
+							}
+							echo '<div><p class="centre">'.$j."</p></div>";
+							$x = 2;
+						}
+					}
+					if ($y == 5){
+						$y = 0;
+						echo "</br>";
+					}
+				}
+			}
 		}
 	} else {
-		$best_index = 0;
-		foreach($vuurwerk as $knal){
-			if (similar_text($knal, $query) > similar_text($vuurwerk[$best_index], $querry)){
-				$best_index = array_search($vuurwerk, array($knal));
-			}
-		}
-		echo "Bedoelde u: ".$vuurwerk[$best_index]."?";
+		echo '<img src="BSOD.png"/>';
 	}
-} else {
-	echo '<img src="BSOD.png"/>';
+	echo "<style>.centre {display: block; margin-left: auto; margin-right: auto; width: 300; color: white; text-align: centre;}";
+	echo "div {text-align: centre; position: relative; left: 46vw;}";
+	echo '.c2 {position: relative; left: 80vw; color: white;}</style>';
 }
+
 ?>
