@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html>
-	<form action="results.php?cat=knal" href="results.php" method="post">
+	<form action="results.php?cat=knal#here" href="results.php" method="post">
 		<textarea name="findtype" hidden>knal</textarea>
 		<button type="submit" id="t">knal</button>
 	</form>
-	<form action="results.php?cat=sier" href="results.php" method="post">
+	<form action="results.php?cat=sier#here" href="results.php" method="post">
 		<textarea name="findtype" hidden>sier</textarea>
 		<button type="submit" id="t">sier</button>
 	</form>
-	<form action="results.php?cat=compleet" href="results.php" method="post">
+	<form action="results.php?cat=compleet#here" href="results.php" method="post">
 		<textarea name="findtype" hidden>compleet</textarea>
 		<button type="submit" id="t">compleet</button>
 	</form>
-	<form action="results.php" href="results.php" method="post">
+	<form action="results.php#here" href="results.php" method="post">
 		<head>
 			<link rel="stylesheet" type="text/css" href="stylesheet.css"></link>
 		</head>
@@ -33,17 +33,14 @@
 	</form>
 </html>
 <?php
-// main
-// Als cat is gegeven (dat is zo wanneer u op een van de knoppen heeft gedrukt) wordt dit uitgevoerd.
-if (isset($_GET['cat']) or isset($_POST['zoekbalk'])){
-	// Connect met de database
+// functions
+function connect(){
 	error_reporting(E_ERROR | E_WARNING | E_PARSE);
 	$servername = "localhost";
 	$username = "user";
 	$password = "";
 	$dbname = "klas1g";
 	echo $_GET['cat'];
-	echo '<img src="winkelwagen.jpg" class="c2" width="50"/></br>';
 	try {
 		$conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
 		// set the PDO error mode to exception
@@ -52,15 +49,70 @@ if (isset($_GET['cat']) or isset($_POST['zoekbalk'])){
 	catch(PDOException $e){
 		echo "Connection failed: " . $e->getMessage();
 	}
+	return $conn;
+}
+function printer($data){
+	// echo data
+	// Function by Laurens Frensen
+	if (gettype($data) == "array"){
+		echo "<table>";
+		foreach($data as $i){
+			$k = 1;
+			if (gettype($i) == "array"){
+				echo "<tr>";
+				foreach($i as $j){
+					if ($k % 2 == 1){
+						echo "<td>".$j."</td>";
+					}
+					$k++;
+				}
+				echo "</tr>";
+			}else{
+				echo $i;
+				echo "</br>";
+			}
+		}
+		echo "</table>";
+	} else if (gettype($data) == "boolean"){
+		if ($data == True){
+			echo "True";
+		} else {
+			echo "False";
+		}
+	} else {
+		echo $data;
+	}
+	echo "</br>";
+}
+function GetData($cat){
+	// Get data
+	$conn = connect();
+	if ($cat == "1"){
+		$sql = "SELECT naam FROM product";
+	} else if ($cat == "2"){
+		$sql = "SELECT prijs FROM product";
+	} else if ($cat == "3"){
+		$sql = "SELECT naam FROM product WHERE Voorraad > 0";
+	} else {
+		$sql = "SELECT * FROM product WHERE categorie = '".$cat."'";
+	}
+	$result = $conn->query($sql);
+	$result = $result->fetchAll();
+	return $result;
+}
+// main
+echo '<img src="winkelwagen.jpg" class="c2" width="50"/></br>';
+// Als cat is gegeven (dat is zo wanneer u op een van de knoppen heeft gedrukt) wordt dit uitgevoerd.
+if (isset($_GET['cat']) or isset($_POST['zoekbalk'])){
+	// Connect met de database
+	$conn = connect();
 	$query = $_POST['findtype'];
 	$zoekopdracht = 'find-type';
 	if($query == ""){
 		$query = $_POST['zoekbalk'];
 		$zoekopdracht = 'find-name';
 	}
-	$sql = "SELECT naam FROM product";
-	$result = $conn->query($sql);
-	$result = $result->fetchAll();
+	$result = GetData("1");
 	$vuurwerk = array();
 	foreach($result as $i){
 		array_push($vuurwerk, $i);
@@ -82,10 +134,7 @@ if (isset($_GET['cat']) or isset($_POST['zoekbalk'])){
 		}
 	}
 	$vuurwerk = $lijstje;
-	$prijs = array();
-	$sql = "SELECT prijs FROM product";
-	$result = $conn->query($sql);
-	$result = $result->fetchAll();
+	$result = GetData("2");
 	$prijs = array();
 	foreach($result as $a){
 		foreach($a as $i){
@@ -93,48 +142,13 @@ if (isset($_GET['cat']) or isset($_POST['zoekbalk'])){
 		}
 	}
 	$voorraad = array();
-	$sql = "SELECT naam FROM product WHERE Voorraad > 0";
-	$result = $conn->query($sql);
-	$result = $result->fetchAll();
+	$result = GetData("3");
 	foreach($result as $i){
 		foreach($i as $j){
 			array_push($voorraad, $j);
 		}
 	}
 
-	function printer($data){
-		// echo data
-		// Function by Laurens Frensen
-		if (gettype($data) == "array"){
-			echo "<table>";
-			foreach($data as $i){
-				$k = 1;
-				if (gettype($i) == "array"){
-					echo "<tr>";
-					foreach($i as $j){
-						if ($k % 2 == 1){
-							echo "<td>".$j."</td>";
-						}
-						$k++;
-					}
-					echo "</tr>";
-				}else{
-					echo $i;
-					echo "</br>";
-				}
-			}
-			echo "</table>";
-		} else if (gettype($data) == "boolean"){
-			if ($data == True){
-				echo "True";
-			} else {
-				echo "False";
-			}
-		} else {
-			echo $data;
-		}
-		echo "</br>";
-	}
 	if ($query == "cobra"){
 		foreach($vuurwerk as $query){
 			echo '<img class="centre" src="'.$query.'.jpg" height="200"/></br>';
@@ -144,11 +158,11 @@ if (isset($_GET['cat']) or isset($_POST['zoekbalk'])){
 		if (in_array($query, $vuurwerk)){
 			if (in_array($query, $voorraad)){
 				echo '<p class="centre">'.$query." hebben we op voorraad!</p>";
-				echo '<img class="centre" src="'.$query.'.jpg" height="200"/></br>';
+				echo '<img class="centre" id="here" src="'.$query.'.jpg" height="200"/></br>';
 				echo '<p class="centre">Prijs: €'.$prijs[array_search($query, $vuurwerk)].'</p>';
 			} else {
 				echo '<p class="centre"'.$query." hebben we niet op voorraad!</p>";
-				echo '<img class="centre" src="'.$query.'.jpg" height="200"></img></br>';
+				echo '<img class="centre" id="here" src="'.$query.'.jpg" height="200"></img></br>';
 				echo '<div><p class="centre">Prijs: €'.$prijs[array_search($query, $vuurwerk)].'</p></div>';
 			}
 		} else {
@@ -187,12 +201,10 @@ if (isset($_GET['cat']) or isset($_POST['zoekbalk'])){
 				echo "Bedoelde u: ".$lijstje[$best_index]."?";
 			} else {
 				if ($query == "compleet"){
-					$sql = "SELECT naam FROM product";
+					$result = GetData("1");
 				} else {
-					$sql = "SELECT naam FROM product WHERE categorie = '".$query."'";
+					$result = GetData($query);
 				}
-				$result = $conn->query($sql);
-				$result = $result->fetchAll();
 				$vuurwerk = array();
 				$y = 0;
 				foreach($result as $i){
@@ -201,7 +213,7 @@ if (isset($_GET['cat']) or isset($_POST['zoekbalk'])){
 					$y++;
 					foreach($i as $j){
 						if ($x == 1){
-							echo '<image width="100" src='.'"'.$j.".jpg".'" class="centre" alt="'.$j.'"/>';
+							echo '<image width="100" id="here" src='.'"'.$j.".jpg".'" class="centre" alt="'.$j.'"/>';
 							$sql2 = "SELECT prijs FROM product WHERE naam = '".$j."'";
 							$result2 = $conn->query($sql2);
 							$result2 = $result2->fetchAll();
